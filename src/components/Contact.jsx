@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaLinkedin, FaGithub, FaSpinner, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa'
 import emailjs from '@emailjs/browser'
@@ -13,21 +13,16 @@ const Contact = () => {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState(null) // 'success', 'error', or null
-
-  // Formspree Configuration - Easy email sending service
-  // To set up Formspree:
-  // 1. Go to https://formspree.io and sign up (free)
-  // 2. Create a new form
-  // 3. Set the form endpoint to receive emails at: komalarora140699@gmail.com
-  // 4. Copy your form endpoint URL and replace FORMSPREE_ENDPOINT below
-  // Example: 'https://formspree.io/f/YOUR_FORM_ID'
-  
-  const FORMSPREE_ENDPOINT = 'YOUR_FORMSPREE_ENDPOINT' // Replace with your Formspree endpoint
-  
-  // Alternative: EmailJS Configuration (if you prefer EmailJS)
-  const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID' // Replace with your EmailJS Service ID
-  const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID' // Replace with your EmailJS Template ID
-  const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY' // Replace with your EmailJS Public Key
+  const emailConfig = useMemo(() => ({
+    serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID?.trim() || '',
+    templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID?.trim() || '',
+    publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim() || '',
+    targetEmail: import.meta.env.VITE_CONTACT_TARGET_EMAIL?.trim() || 'komalarora140699@gmail.com'
+  }), [])
+  const isEmailConfigured = useMemo(
+    () => Boolean(emailConfig.serviceId && emailConfig.templateId && emailConfig.publicKey),
+    [emailConfig]
+  )
 
   const handleChange = (e) => {
     setFormData({
@@ -46,72 +41,32 @@ const Contact = () => {
     setSubmitStatus(null)
 
     try {
-      // Priority 1: Try Formspree if configured
-      if (FORMSPREE_ENDPOINT && FORMSPREE_ENDPOINT !== 'YOUR_FORMSPREE_ENDPOINT') {
-        const response = await fetch(FORMSPREE_ENDPOINT, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            subject: formData.subject || 'Contact Form Inquiry',
-            message: formData.message,
-            _replyto: formData.email,
-            _subject: formData.subject || 'Contact Form Inquiry from Portfolio'
-          })
-        })
-
-        if (response.ok) {
-          setSubmitStatus('success')
-          setFormData({ name: '', email: '', subject: '', message: '' })
-          setTimeout(() => {
-            setSubmitStatus(null)
-          }, 5000)
-          setIsSubmitting(false)
-          return
-        } else {
-          throw new Error('Formspree submission failed')
-        }
+      if (!isEmailConfigured) {
+        throw new Error('EmailJS credentials missing')
       }
 
-      // Priority 2: Try EmailJS if configured
-      if (EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID' && 
-          EMAILJS_TEMPLATE_ID !== 'YOUR_TEMPLATE_ID' && 
-          EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
-        const templateParams = {
-          from_name: formData.name,
-          from_email: formData.email,
-          subject: formData.subject || 'Contact Form Inquiry',
-          message: formData.message,
-          reply_to: formData.email,
-          to_email: 'komalarora140699@gmail.com'
-        }
-
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID,
-          templateParams,
-          EMAILJS_PUBLIC_KEY
-        )
-
-        setSubmitStatus('success')
-        setFormData({ name: '', email: '', subject: '', message: '' })
-        setTimeout(() => {
-          setSubmitStatus(null)
-        }, 5000)
-        setIsSubmitting(false)
-        return
+      const templateParams = {
+        from_name: formData.name,
+        from_email: formData.email,
+        subject: formData.subject || 'Contact Form Inquiry',
+        message: formData.message,
+        reply_to: formData.email,
+        to_email: emailConfig.targetEmail
       }
 
-      // If neither is configured, show error with setup instructions
-      setSubmitStatus('error')
+      await emailjs.send(
+        emailConfig.serviceId,
+        emailConfig.templateId,
+        templateParams,
+        emailConfig.publicKey
+      )
+
+      setSubmitStatus('success')
+      setFormData({ name: '', email: '', subject: '', message: '' })
       setTimeout(() => {
         setSubmitStatus(null)
-      }, 10000)
-      
+      }, 5000)
+
     } catch (error) {
       console.error('Email Error:', error)
       setSubmitStatus('error')
@@ -275,16 +230,16 @@ const Contact = () => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <FaExclamationCircle /> Oops! There was an error sending your message. Please check the console or configure Formspree/EmailJS. You can also email me directly at komalarora140699@gmail.com
+                <FaExclamationCircle /> Oops! There was an error sending your message. Please try again or email me directly at komalarora140699@gmail.com
               </motion.div>
             )}
-            {(FORMSPREE_ENDPOINT === 'YOUR_FORMSPREE_ENDPOINT' && EMAILJS_SERVICE_ID === 'YOUR_SERVICE_ID') && (
+            {!isEmailConfigured && (
               <motion.div
                 className="form-message info"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <FaExclamationCircle /> ⚠️ Email service not configured. Please set up Formspree (recommended) or EmailJS to enable email sending. See Contact.jsx for setup instructions.
+                <FaExclamationCircle /> ⚠️ Email service not configured. Add your EmailJS keys to <code>.env.local</code>. See <code>FORM_SETUP.md</code> for the quick guide.
               </motion.div>
             )}
           </form>

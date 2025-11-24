@@ -40,9 +40,9 @@ To enable direct email sending from your contact form (without opening email cli
 
 ---
 
-## Option 2: EmailJS (Alternative)
+## Option 2: EmailJS (JavaScript only flow)
 
-If you prefer EmailJS:
+If you prefer EmailJS for a pure front-end flow (no server needed):
 
 1. **Sign Up**: Go to https://www.emailjs.com/ and create a free account
 
@@ -66,8 +66,19 @@ If you prefer EmailJS:
    - Template ID: From "Email Templates" page
    - Public Key: From Account → General settings
 
-5. **Update Contact.jsx**:
-   - Replace `YOUR_SERVICE_ID`, `YOUR_TEMPLATE_ID`, and `YOUR_PUBLIC_KEY`
+5. **Create Environment Variables**:
+   - Create a file named `.env.local` in the project root (same folder as `package.json`)
+   - Add the following entries:
+     ```
+     VITE_EMAILJS_SERVICE_ID=your_service_id
+     VITE_EMAILJS_TEMPLATE_ID=your_template_id
+     VITE_EMAILJS_PUBLIC_KEY=your_public_key
+     VITE_CONTACT_TARGET_EMAIL=komalarora140699@gmail.com
+     ```
+   - Restart `npm run dev` after saving so Vite picks up the new values
+
+6. **Deploy**:
+   - When deploying to Vercel/Netlify, add the same variables in the project dashboard (use the `VITE_` names exactly)
 
 ### EmailJS Free Plan:
 - 200 emails per month (free)

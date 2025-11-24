@@ -19,7 +19,7 @@ const Experience = () => {
       title: 'Senior Web Developer',
       company: 'Ultivic Pvt Ltd',
       location: 'Mohali, India',
-      period: 'August 2023 - Present',
+      period: 'August 2023 - August 2025',
       description: [
         'Leading development of web applications using Laravel, CodeIgniter, CakePHP, Vue.js, React, MySQL, and PostgreSQL',
         'Building and integrating RESTful APIs and managing backend architecture',

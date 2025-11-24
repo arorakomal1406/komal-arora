@@ -9,7 +9,7 @@ const Experience = () => {
       title: 'FullStack Web Developer',
       company: 'MeetArts',
       location: 'Amritsar, India',
-      period: 'September 2023 - Present',
+      period: 'September 2025 - Present',
       description: [
         'Working as a freelance web developer on a contractual basis, delivering tailored web applications for various clients.'
       ]

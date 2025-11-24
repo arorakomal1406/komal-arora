@@ -21,11 +21,11 @@ To enable direct email sending from your contact form (without opening email cli
    - After creating the form, you'll see a URL like: `https://formspree.io/f/YOUR_FORM_ID`
    - Copy this URL
 
-5. **Add to Your Code**:
-   - Open `src/components/Contact.jsx`
-   - Find the line: `const FORMSPREE_ENDPOINT = 'YOUR_FORMSPREE_ENDPOINT'`
-   - Replace `YOUR_FORMSPREE_ENDPOINT` with your Formspree URL
-   - Example: `const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xpzgqnye'`
+5. **Add Environment Variable**:
+   - Create (or update) a `.env.local` file in the project root
+   - Add: `VITE_FORMSPREE_ENDPOINT=https://formspree.io/f/xzzqbblq`
+   - Restart `npm run dev` so Vite reads the new value
+   - When deploying (Vercel/Netlify/etc.), add the same env var in the dashboard so production builds can send mail
 
 6. **Test It**:
    - Save the file
@@ -90,7 +90,7 @@ If you prefer EmailJS for a pure front-end flow (no server needed):
 
 1. Visit: https://formspree.io/register
 2. Create account → New Form → Copy endpoint URL
-3. Update `FORMSPREE_ENDPOINT` in `Contact.jsx`
+3. Add `VITE_FORMSPREE_ENDPOINT` to `.env.local`
 4. Push to GitHub
 5. Done! ✅
 

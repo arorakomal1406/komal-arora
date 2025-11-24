@@ -13,16 +13,18 @@ const Contact = () => {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState(null) // 'success', 'error', or null
-  const emailConfig = useMemo(() => ({
+  const mailConfig = useMemo(() => ({
+    formspreeEndpoint: import.meta.env.VITE_FORMSPREE_ENDPOINT?.trim() || '',
     serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID?.trim() || '',
     templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID?.trim() || '',
     publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim() || '',
     targetEmail: import.meta.env.VITE_CONTACT_TARGET_EMAIL?.trim() || 'komalarora140699@gmail.com'
   }), [])
   const isEmailConfigured = useMemo(
-    () => Boolean(emailConfig.serviceId && emailConfig.templateId && emailConfig.publicKey),
-    [emailConfig]
+    () => Boolean(mailConfig.serviceId && mailConfig.templateId && mailConfig.publicKey),
+    [mailConfig]
   )
+  const isFormspreeConfigured = Boolean(mailConfig.formspreeEndpoint)
 
   const handleChange = (e) => {
     setFormData({
@@ -41,8 +43,37 @@ const Contact = () => {
     setSubmitStatus(null)
 
     try {
+      if (isFormspreeConfigured) {
+        const response = await fetch(mailConfig.formspreeEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject || 'Contact Form Inquiry',
+            message: formData.message,
+            _replyto: formData.email,
+            _subject: formData.subject || 'Portfolio Contact Form'
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Formspree submission failed')
+        }
+
+        setSubmitStatus('success')
+        setFormData({ name: '', email: '', subject: '', message: '' })
+        setTimeout(() => {
+          setSubmitStatus(null)
+        }, 5000)
+        return
+      }
+
       if (!isEmailConfigured) {
-        throw new Error('EmailJS credentials missing')
+        throw new Error('No email service configured')
       }
 
       const templateParams = {
@@ -51,14 +82,14 @@ const Contact = () => {
         subject: formData.subject || 'Contact Form Inquiry',
         message: formData.message,
         reply_to: formData.email,
-        to_email: emailConfig.targetEmail
+        to_email: mailConfig.targetEmail
       }
 
       await emailjs.send(
-        emailConfig.serviceId,
-        emailConfig.templateId,
+        mailConfig.serviceId,
+        mailConfig.templateId,
         templateParams,
-        emailConfig.publicKey
+        mailConfig.publicKey
       )
 
       setSubmitStatus('success')
@@ -233,13 +264,13 @@ const Contact = () => {
                 <FaExclamationCircle /> Oops! There was an error sending your message. Please try again or email me directly at komalarora140699@gmail.com
               </motion.div>
             )}
-            {!isEmailConfigured && (
+            {!isFormspreeConfigured && !isEmailConfigured && (
               <motion.div
                 className="form-message info"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <FaExclamationCircle /> ⚠️ Email service not configured. Add your EmailJS keys to <code>.env.local</code>. See <code>FORM_SETUP.md</code> for the quick guide.
+                <FaExclamationCircle /> ⚠️ Email service not configured. Add a Formspree endpoint (<code>VITE_FORMSPREE_ENDPOINT</code>) or EmailJS keys to <code>.env.local</code>. See <code>FORM_SETUP.md</code> for the quick guide.
               </motion.div>
             )}
           </form>

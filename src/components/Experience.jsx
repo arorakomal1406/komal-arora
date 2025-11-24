@@ -6,6 +6,16 @@ const Experience = () => {
   const experiences = [
     {
       type: 'work',
+      title: 'FullStack Web Developer',
+      company: 'MeetArts',
+      location: 'Amritsar, India',
+      period: 'September 2023 - Present',
+      description: [
+        'Working as a freelance web developer on a contractual basis, delivering tailored web applications for various clients.'
+      ]
+    },
+    {
+      type: 'work',
       title: 'Senior Web Developer',
       company: 'Ultivic Pvt Ltd',
       location: 'Mohali, India',

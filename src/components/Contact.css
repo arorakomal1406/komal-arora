@@ -196,6 +196,12 @@
   border: 2px solid #ef4444;
 }
 
+.form-message.info {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 2px solid #3b82f6;
+}
+
 .form-message svg {
   font-size: 1.2rem;
   flex-shrink: 0;

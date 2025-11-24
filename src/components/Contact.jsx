@@ -14,18 +14,17 @@ const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState(null) // 'success', 'error', or null
 
-  // EmailJS Configuration
-  // To set up EmailJS:
-  // 1. Sign up at https://www.emailjs.com/
-  // 2. Create an email service (Gmail, Outlook, etc.)
-  // 3. Create an email template with these variables:
-  //    Subject: {{subject}}
-  //    From: {{from_name}} ({{from_email}})
-  //    Reply To: {{reply_to}}
-  //    Message Body: {{message}}
-  // 4. Get your Public Key from Account > General
-  // 5. Replace the values below with your actual IDs and Public Key
+  // Formspree Configuration - Easy email sending service
+  // To set up Formspree:
+  // 1. Go to https://formspree.io and sign up (free)
+  // 2. Create a new form
+  // 3. Set the form endpoint to receive emails at: komalarora140699@gmail.com
+  // 4. Copy your form endpoint URL and replace FORMSPREE_ENDPOINT below
+  // Example: 'https://formspree.io/f/YOUR_FORM_ID'
   
+  const FORMSPREE_ENDPOINT = 'YOUR_FORMSPREE_ENDPOINT' // Replace with your Formspree endpoint
+  
+  // Alternative: EmailJS Configuration (if you prefer EmailJS)
   const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID' // Replace with your EmailJS Service ID
   const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID' // Replace with your EmailJS Template ID
   const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY' // Replace with your EmailJS Public Key
@@ -47,55 +46,78 @@ const Contact = () => {
     setSubmitStatus(null)
 
     try {
-      // Check if EmailJS is configured
-      if (EMAILJS_SERVICE_ID === 'YOUR_SERVICE_ID' || 
-          EMAILJS_TEMPLATE_ID === 'YOUR_TEMPLATE_ID' || 
-          EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
-        // Fallback: Use mailto if EmailJS is not configured
-        const emailBody = `Name: ${formData.name}\nEmail: ${formData.email}\n\nSubject: ${formData.subject}\n\nMessage:\n${formData.message}`
-        const mailtoLink = `mailto:komalarora140699@gmail.com?subject=${encodeURIComponent(formData.subject || 'Contact Form Inquiry')}&body=${encodeURIComponent(emailBody)}`
-        window.location.href = mailtoLink
+      // Priority 1: Try Formspree if configured
+      if (FORMSPREE_ENDPOINT && FORMSPREE_ENDPOINT !== 'YOUR_FORMSPREE_ENDPOINT') {
+        const response = await fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject || 'Contact Form Inquiry',
+            message: formData.message,
+            _replyto: formData.email,
+            _subject: formData.subject || 'Contact Form Inquiry from Portfolio'
+          })
+        })
+
+        if (response.ok) {
+          setSubmitStatus('success')
+          setFormData({ name: '', email: '', subject: '', message: '' })
+          setTimeout(() => {
+            setSubmitStatus(null)
+          }, 5000)
+          setIsSubmitting(false)
+          return
+        } else {
+          throw new Error('Formspree submission failed')
+        }
+      }
+
+      // Priority 2: Try EmailJS if configured
+      if (EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID' && 
+          EMAILJS_TEMPLATE_ID !== 'YOUR_TEMPLATE_ID' && 
+          EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+        const templateParams = {
+          from_name: formData.name,
+          from_email: formData.email,
+          subject: formData.subject || 'Contact Form Inquiry',
+          message: formData.message,
+          reply_to: formData.email,
+          to_email: 'komalarora140699@gmail.com'
+        }
+
+        await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          templateParams,
+          EMAILJS_PUBLIC_KEY
+        )
+
         setSubmitStatus('success')
         setFormData({ name: '', email: '', subject: '', message: '' })
+        setTimeout(() => {
+          setSubmitStatus(null)
+        }, 5000)
         setIsSubmitting(false)
         return
       }
 
-      // Send email using EmailJS
-      // Make sure your EmailJS template includes: {{subject}} and {{message}}
-      const templateParams = {
-        from_name: formData.name,
-        from_email: formData.email,
-        subject: formData.subject || 'Contact Form Inquiry',
-        message: formData.message,
-        reply_to: formData.email,
-        to_email: 'komalarora140699@gmail.com'
-      }
-
-      await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_ID,
-        templateParams,
-        EMAILJS_PUBLIC_KEY
-      )
-
-      setSubmitStatus('success')
-      setFormData({ name: '', email: '', subject: '', message: '' })
+      // If neither is configured, show error with setup instructions
+      setSubmitStatus('error')
+      setTimeout(() => {
+        setSubmitStatus(null)
+      }, 10000)
       
-      // Clear success message after 5 seconds
+    } catch (error) {
+      console.error('Email Error:', error)
+      setSubmitStatus('error')
       setTimeout(() => {
         setSubmitStatus(null)
       }, 5000)
-    } catch (error) {
-      console.error('EmailJS Error:', error)
-      setSubmitStatus('error')
-      
-      // Fallback to mailto if EmailJS fails
-      setTimeout(() => {
-        const emailBody = `Name: ${formData.name}\nEmail: ${formData.email}\n\nSubject: ${formData.subject}\n\nMessage:\n${formData.message}`
-        const mailtoLink = `mailto:komalarora140699@gmail.com?subject=${encodeURIComponent(formData.subject || 'Contact Form Inquiry')}&body=${encodeURIComponent(emailBody)}`
-        window.open(mailtoLink)
-      }, 2000)
     } finally {
       setIsSubmitting(false)
     }
@@ -253,7 +275,16 @@ const Contact = () => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <FaExclamationCircle /> Oops! There was an error sending your message. Opening your email client as a fallback...
+                <FaExclamationCircle /> Oops! There was an error sending your message. Please check the console or configure Formspree/EmailJS. You can also email me directly at komalarora140699@gmail.com
+              </motion.div>
+            )}
+            {(FORMSPREE_ENDPOINT === 'YOUR_FORMSPREE_ENDPOINT' && EMAILJS_SERVICE_ID === 'YOUR_SERVICE_ID') && (
+              <motion.div
+                className="form-message info"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <FaExclamationCircle /> ⚠️ Email service not configured. Please set up Formspree (recommended) or EmailJS to enable email sending. See Contact.jsx for setup instructions.
               </motion.div>
             )}
           </form>
